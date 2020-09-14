@@ -13,6 +13,12 @@
 from grblas import Matrix, Vector
 from grblas import dtypes
 
+from .loader import Loader
+data_dir = '/home/nyirit/projects/dipterv/social_network_20_03_03/'  # fixme
+loader = Loader(data_dir)
+loader.load_edge('post', 'hasCreator', 'person', is_dynamic=True)
+exit(1)
+
 # ############# dummy data ################
 post_hascreator_person = [
     # post id, creator id
@@ -54,6 +60,7 @@ MResult = Matrix.new(dtypes.INT32, nrows=num_of_persons, ncols=2, name='Result')
 V_count = Vector.new(dtypes.INT32, M_post_person.ncols, name="Vcount")
 V_count << M_post_person.reduce_columns()
 
+# first column of the result matrix is the nr. of threads initiated
 MResult[:, 0] << V_count
 
 print("!! threads", MResult)
