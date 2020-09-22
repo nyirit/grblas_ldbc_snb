@@ -154,7 +154,7 @@ class Loader:
                 # check if both sides of the connection is present
                 if (id_from not in from_vertex_type.id2index or
                         id_to not in to_vertex_type.id2index):
-                    logger.info("Dropping dangling edge: (%s:%s)-[%s]-(%s:%s)" % (
+                    logger.error("Dropping dangling edge: (%s:%s)-[%s]-(%s:%s)" % (
                         from_vertex_type.name, id_from, edge_name, to_vertex_type.name, id_to
                     ))
                     continue
@@ -180,6 +180,6 @@ class Loader:
                                nrows=len(from_vertex_type.index2id),
                                ncols=len(to_vertex_type.index2id),
                                dtype=dtype,
-                               name="%s_%s_%s" % (from_vertex_type.name, edge_name, to_vertex_type))
+                               name="%s_%s_%s" % (from_vertex_type.name, edge_name, to_vertex_type.name))
 
         return m
