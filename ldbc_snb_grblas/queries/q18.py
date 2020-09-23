@@ -18,7 +18,7 @@ def calc(data_dir, person_id, tag_name):
     loader = Loader(data_dir)
 
     persons = loader.load_vertex_type('person', is_dynamic=True)
-    person_vector = Vector.from_values([persons.id2index[person_id]], [True], size=persons.length)
+    person_vector = Vector.from_values([persons.id2index(person_id)], [True], size=persons.length)
 
     tags = loader.load_vertex_type('tag', is_dynamic=False, column_names=['name'])
 
@@ -41,7 +41,7 @@ def calc(data_dir, person_id, tag_name):
     interested_persons = tag_vector.vxm(person_hasinterest_tag.T).new(mask=~StructuralMask(friendsl1))
 
     # manually remove the parameter person as he is interested in the given tag and is a friend of his friends
-    del interested_persons[persons.id2index[person_id]]
+    del interested_persons[persons.id2index(person_id)]
 
     friendsl2 = friendsl1.vxm(person_knows_person).new(mask=StructuralMask(interested_persons))
     friendsl2_keys, _ = friendsl2.to_values()
@@ -71,7 +71,7 @@ def calc(data_dir, person_id, tag_name):
     result_values = zip(*result_matrix.reduce_rows().new().to_values())
 
     # create final (person_id, count) tuples and sort them by count ASC, id DESC
-    result = sorted(map(lambda x: (persons.index2id[x[0]], x[1]), result_values), key=lambda x: (-x[1], x[0]))
+    result = sorted(map(lambda x: (persons.index2id(x[0]), x[1]), result_values), key=lambda x: (-x[1], x[0]))
 
     # print top results
     for person_id, mutual_friend_count in islice(result, 20):

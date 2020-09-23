@@ -5,7 +5,6 @@ from grblas import dtypes
 from itertools import repeat
 
 import logging
-from collections import namedtuple
 from os import strerror
 from os import path
 
@@ -16,16 +15,31 @@ class LoadError(Exception):  # fixme
     pass
 
 
+class VertexType:
+    def __init__(self, name, index2id=[], id2index={}, data=[], length=0):
+        self.name = name
+        self._index2id = index2id
+        self._id2index = id2index
+        self.data = data
+        self.length = length
+
+    def index2id(self, index):
+        # the index should already be present in the mapping, if not, it was not loaded or used before,
+        # so it doesn't make any sense to translate it to an id.
+        return self._index2id[index]
+
+    def id2index(self, oid):
+        # if an id wasn't loaded, let's create the mapping on-the-fly
+        # this is useful when edges are used without needing any property for the corresponding vertices
+        if oid not in self._id2index:
+            self._id2index[oid] = self.length
+            self._index2id.append(oid)
+            self.length += 1
+
+        return self._id2index[oid]
+
+
 logger = logging.getLogger(__name__)
-
-VertexType = namedtuple('VertexType', [
-    'name',
-    'index2id',  # logical (dense) id -> original (sparse) id
-    'id2index',  # original (sparse) id -> logical (dense) id
-    'data',
-    'length'  # nr. of vertices present
-])
-
 
 DEFAULT_DELIMITER = '|'
 DEFAULT_QUOTE = '"'
@@ -107,6 +121,16 @@ class Loader:
 
             return VertexType(vertex_type_name, mapping, revese_mapping, data, len(mapping))
 
+    @staticmethod
+    def load_empty_vertex(vertex_type_name: str):
+        """
+        Creates a VertexType without any data or id mapping.
+        This is useful when only the edges are interesting not the actual vertex data.
+
+        Note: the vertex_type_name is not validated in any way.
+        """
+        return VertexType(vertex_type_name)
+
     def load_edge_type(self, from_vertex_type: VertexType, edge_name: str, to_vertex_type: VertexType,
                        *, is_dynamic: bool, dtype=dtypes.INT32, lmask=None, rmask=None, undirected=False):
         """
@@ -151,19 +175,11 @@ class Loader:
                 id_from = int(row_data.pop(0))
                 id_to = int(row_data.pop(0))
 
-                # check if both sides of the connection is present
-                if (id_from not in from_vertex_type.id2index or
-                        id_to not in to_vertex_type.id2index):
-                    logger.error("Dropping dangling edge: (%s:%s)-[%s]-(%s:%s)" % (
-                        from_vertex_type.name, id_from, edge_name, to_vertex_type.name, id_to
-                    ))
-                    continue
-
-                from_index = from_vertex_type.id2index[id_from]
+                from_index = from_vertex_type.id2index(id_from)
                 if lmask is not None and from_index not in lmask:
                     continue
 
-                to_index = to_vertex_type.id2index[id_to]
+                to_index = to_vertex_type.id2index(id_to)
                 if rmask is not None and to_index not in rmask:
                     continue
 
@@ -177,8 +193,8 @@ class Loader:
 
         m = Matrix.from_values(from_indexes, to_indexes,
                                repeat(1, len(from_indexes)),  # True for all value
-                               nrows=len(from_vertex_type.index2id),
-                               ncols=len(to_vertex_type.index2id),
+                               nrows=from_vertex_type.length,
+                               ncols=to_vertex_type.length,
                                dtype=dtype,
                                name="%s_%s_%s" % (from_vertex_type.name, edge_name, to_vertex_type.name))
 

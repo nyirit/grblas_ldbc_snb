@@ -14,9 +14,7 @@ def calc(data_dir, country_name):
     # load vertices
     loader = Loader(data_dir)
 
-    # todo: persons are not really needed here. They are only loaded to create the mappings. This could be done
-    # todo: on the fly while loading the edges.
-    persons = loader.load_vertex_type('person', is_dynamic=True)
+    persons = loader.load_empty_vertex('person')
     places = loader.load_vertex_type('place', is_dynamic=False, column_names=['name', 'type'])
 
     print("Vertices persons and places\t%s" % (perf_counter() - time_start), file=stderr)

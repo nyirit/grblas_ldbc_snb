@@ -69,7 +69,7 @@ def calc(data_dir, start_date, end_date):
     print("Data calculated\t%s" % (perf_counter() - time_start), file=stderr)
 
     # sort results by message_count
-    sorted_result = sorted(zip(*vec_person.to_values()), key=lambda x: (-x[1], persons.index2id[x[0]]))  # fixme
+    sorted_result = sorted(zip(*vec_person.to_values()), key=lambda x: (-x[1], persons.index2id(x[0])))  # fixme
 
     print("Data sorted\t%s" % (perf_counter() - time_start), file=stderr)
 
@@ -77,7 +77,7 @@ def calc(data_dir, start_date, end_date):
     for person_index, message_count in islice(sorted_result, 100):
         first_name = persons.data[person_index][0]
         last_name = persons.data[person_index][1]
-        person_id = persons.index2id[person_index]
+        person_id = persons.index2id(person_index)
         print(person_id, first_name, last_name, thread_count[person_index].value, message_count)
 
     print("All done\t%s" % (perf_counter() - time_start), file=stderr)
