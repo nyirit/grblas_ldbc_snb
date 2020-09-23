@@ -40,14 +40,14 @@ def calc(data_dir, person_id, tag_name):
     # get second level friends of given person, who are interested in given tag. (They should not be in friendsl1!)
     interested_persons = tag_vector.vxm(person_hasinterest_tag.T).new(mask=~StructuralMask(friendsl1))
 
-    # manually remove the parameter person as he is interested in the given tag and is a friend os his friends
+    # manually remove the parameter person as he is interested in the given tag and is a friend of his friends
     del interested_persons[persons.id2index[person_id]]
 
     friendsl2 = friendsl1.vxm(person_knows_person).new(mask=StructuralMask(interested_persons))
     friendsl2_keys, _ = friendsl2.to_values()
 
     # calculate mutual friend count...
-    # result_matrix start out as a partial identity matrix selecting level2 friends
+    # result_matrix start out as selection matrix for level2 friends
     result_matrix = Matrix.from_values(friendsl2_keys, friendsl2_keys,
                                        values=repeat(1, friendsl2.nvals),
                                        nrows=persons.length,
@@ -56,7 +56,7 @@ def calc(data_dir, person_id, tag_name):
     # get the corresponding friends for each level2 friend
     result_matrix << result_matrix.mxm(person_knows_person)
 
-    # create a partial identity matrix for selecting level1 friends
+    # create a selection matrix for level1 friends
     friendsl1_keys, _ = friendsl1.to_values()
     friendsl1_matrix = Matrix.from_values(friendsl1_keys, friendsl1_keys,
                                           values=repeat(1, friendsl1.nvals),
