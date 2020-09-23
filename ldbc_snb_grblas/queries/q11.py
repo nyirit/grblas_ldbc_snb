@@ -39,10 +39,7 @@ def calc(data_dir, country_name):
     print("Created person mask\t%s" % (perf_counter() - time_start), file=stderr)
 
     # load person-knows-person for people located in 'country'
-    person_knows_person = loader.load_edge_type(persons, 'knows', persons, is_dynamic=True, lmask=person_mask, rmask=person_mask)
-
-    # make edges undirected
-    person_knows_person << person_knows_person.ewise_add(person_knows_person.T)
+    person_knows_person = loader.load_edge_type(persons, 'knows', persons, is_dynamic=True, lmask=person_mask, rmask=person_mask, undirected=True)
 
     # calculate triangles
     r = person_knows_person.mxm(person_knows_person).new()

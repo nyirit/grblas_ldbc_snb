@@ -108,7 +108,7 @@ class Loader:
             return VertexType(vertex_type_name, mapping, revese_mapping, data, len(mapping))
 
     def load_edge_type(self, from_vertex_type: VertexType, edge_name: str, to_vertex_type: VertexType,
-                       *, is_dynamic: bool, dtype=dtypes.INT32, lmask=None, rmask=None):
+                       *, is_dynamic: bool, dtype=dtypes.INT32, lmask=None, rmask=None, undirected=False):
         """
 
         TODO: add parsing of properties of a relation.
@@ -181,5 +181,8 @@ class Loader:
                                ncols=len(to_vertex_type.index2id),
                                dtype=dtype,
                                name="%s_%s_%s" % (from_vertex_type.name, edge_name, to_vertex_type.name))
+
+        if undirected:
+            m << m.ewise_add(m.T)
 
         return m
