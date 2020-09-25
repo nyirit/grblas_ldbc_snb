@@ -16,11 +16,11 @@ class LoadError(Exception):  # fixme
 
 
 class VertexType:
-    def __init__(self, name, index2id=[], id2index={}, data=[], length=0):
+    def __init__(self, name, index2id=None, id2index=None, data=None, length=0):
         self.name = name
-        self._index2id = index2id
-        self._id2index = id2index
-        self.data = data
+        self._index2id = index2id or []
+        self._id2index = id2index or {}
+        self.data = data or []
         self.length = length
 
     def index2id(self, index):
@@ -84,7 +84,7 @@ class Loader:
 
         return columns
 
-    def load_vertex_type(self, vertex_type_name: str, column_names=[], *, is_dynamic):
+    def load_vertex_type(self, vertex_type_name: str, column_names=None, *, is_dynamic):
         """
 
         :param vertex_type_name:
@@ -96,6 +96,8 @@ class Loader:
         subdir = 'dynamic' if is_dynamic else 'static'
         file_path = path.join(self.data_dir, subdir, filename)
 
+        column_names = column_names or []
+
         with open(file_path) as csvfile:
             reader = csv.reader(csvfile, delimiter=DEFAULT_DELIMITER, quotechar=DEFAULT_QUOTE)
 
@@ -106,20 +108,20 @@ class Loader:
             columns = self._parse_header(header, column_names)
 
             mapping = []  # logical (dense) id -> original (sparse) id
-            revese_mapping = {}  # original id -> logical id
+            reverse_mapping = {}  # original id -> logical id
             data = []  # any additional data based on 'column_names'
 
             for i, row in enumerate(reader):
                 row_data = [row[i] for i in columns]
                 index = int(row_data.pop(0))
                 mapping.append(index)
-                revese_mapping[index] = i
+                reverse_mapping[index] = i
 
                 # if there's anything else to store
                 if row_data:
                     data.append(row_data)
 
-            return VertexType(vertex_type_name, mapping, revese_mapping, data, len(mapping))
+            return VertexType(vertex_type_name, mapping, reverse_mapping, data, len(mapping))
 
     @staticmethod
     def load_empty_vertex(vertex_type_name: str):
@@ -151,7 +153,7 @@ class Loader:
         file_path = path.join(self.data_dir, subdir, filename)
 
         if not path.isfile(file_path):
-            pass  # fixme should we handle this...? open() will raise an exception...
+            raise LoadError("(%s)-[:%s]-(%s) connection doesn't exist." % (from_vertex_type.name, edge_name, to_vertex_type.name))
 
         with open(file_path) as csvfile:
             reader = csv.reader(csvfile, delimiter=DEFAULT_DELIMITER, quotechar=DEFAULT_QUOTE)
