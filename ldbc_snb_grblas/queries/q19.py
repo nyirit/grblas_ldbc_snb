@@ -1,3 +1,8 @@
+"""
+LDBC SNB BI query 19. Interaction path between cities
+https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-19.pdf
+"""
+
 from sys import stderr
 from time import perf_counter
 

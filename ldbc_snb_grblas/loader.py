@@ -22,6 +22,7 @@ class VertexType:
         self._id2index = id2index or {}
         self.data = data or []
         self.length = length
+        self.index_data_dict = None
 
     def index2id(self, index):
         # the index should already be present in the mapping, if not, it was not loaded or used before,
@@ -37,6 +38,23 @@ class VertexType:
             self.length += 1
 
         return self._id2index[oid]
+
+    def get_index_data_dict(self):
+        """
+
+        :return:
+        """
+
+        if not self.data:
+            raise ValueError(f"Cannot return dictiory for {self.name} vertex, because there's no data elements loaded.")
+
+        if self.index_data_dict is None:
+            result = dict()
+            for i in range(self.length):
+                result[i] = self.data[i]
+            self.index_data_dict = result
+
+        return self.index_data_dict
 
 
 logger = logging.getLogger(__name__)
@@ -68,7 +86,13 @@ class Loader:
         """
         columns = []
 
+        # make sure all header elements are lowercase
+        header = [x.lower() for x in header]
+
         for name in column_names:
+            # make sure column name is lowercase as well
+            name = name.lower()
+
             try:
                 index = header.index(name)
                 columns.append(index)
@@ -84,7 +108,7 @@ class Loader:
 
         return columns
 
-    def load_vertex_type(self, vertex_type_name: str, column_names=None, *, is_dynamic):
+    def load_vertex_type(self, vertex_type_name: str, column_names=None, *, is_dynamic, id_mask=None):
         """
 
         :param vertex_type_name:
@@ -113,9 +137,13 @@ class Loader:
 
             for i, row in enumerate(reader):
                 row_data = [row[i] for i in columns]
-                index = int(row_data.pop(0))
-                mapping.append(index)
-                reverse_mapping[index] = i
+                row_id = int(row_data.pop(0))
+
+                if id_mask is not None and row_id not in id_mask:
+                    continue
+
+                mapping.append(row_id)
+                reverse_mapping[row_id] = i
 
                 # if there's anything else to store
                 if row_data:
@@ -162,8 +190,8 @@ class Loader:
             # todo: if attributes are needed, column_names should be a function parameter and
             # todo: these values should be inserted into that
             column_names = [
-                '%s.id' % from_vertex_type.name.title(),
-                '%s.id' % to_vertex_type.name.title(),
+                '%s.id' % from_vertex_type.name,
+                '%s.id' % to_vertex_type.name,
             ]
 
             header = next(reader)

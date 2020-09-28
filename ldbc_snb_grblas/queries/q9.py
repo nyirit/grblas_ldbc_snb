@@ -1,3 +1,8 @@
+"""
+LDBC SNB BI query 9. Top thread initiators
+https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-09.pdf
+"""
+
 from sys import stderr
 from time import perf_counter
 

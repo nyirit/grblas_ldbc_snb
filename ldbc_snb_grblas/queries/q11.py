@@ -1,3 +1,8 @@
+"""
+LDBC SNB BI query 11. Friend triangles
+https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-11.pdf
+"""
+
 from itertools import repeat
 from sys import stderr
 from time import perf_counter

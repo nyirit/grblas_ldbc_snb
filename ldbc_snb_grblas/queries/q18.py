@@ -1,3 +1,8 @@
+"""
+LDBC SNB BI query 18. Friend recommendation
+https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-18.pdf
+"""
+
 from itertools import repeat, islice
 from sys import stderr
 from time import perf_counter
