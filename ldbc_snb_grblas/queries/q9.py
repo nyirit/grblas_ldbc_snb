@@ -36,9 +36,9 @@ def calc(data_dir, start_date, end_date):
     time_start = perf_counter()
 
     loader = Loader(data_dir)
-    persons = loader.load_vertex_type('person', is_dynamic=True, column_names=['firstName', 'lastName'])
-    comments = loader.load_vertex_type('comment', is_dynamic=True, column_names=['creationDate'])
-    posts = loader.load_vertex_type('post', is_dynamic=True, column_names=['creationDate'])
+    persons = loader.load_vertex('person', is_dynamic=True, column_names=['firstName', 'lastName'])
+    comments = loader.load_vertex('comment', is_dynamic=True, column_names=['creationDate'])
+    posts = loader.load_vertex('post', is_dynamic=True, column_names=['creationDate'])
 
     print("Vertices loaded\t%s" % (perf_counter() - time_start), file=stderr)
 
@@ -48,9 +48,9 @@ def calc(data_dir, start_date, end_date):
 
     print("Edge masks calculated\t%s" % (perf_counter() - time_start), file=stderr)
 
-    post_hascreator_person = loader.load_edge_type(posts, 'hasCreator', persons, is_dynamic=True, lmask=posts_mask)
-    comment_replyof_post = loader.load_edge_type(comments, 'replyOf', posts, is_dynamic=True, lmask=comments_mask, rmask=posts_mask)
-    comment_replyof_comment = loader.load_edge_type(comments, 'replyOf', comments, is_dynamic=True, lmask=comments_mask, rmask=comments_mask)
+    post_hascreator_person = loader.load_edge(posts, 'hasCreator', persons, is_dynamic=True, lmask=posts_mask)
+    comment_replyof_post = loader.load_edge(comments, 'replyOf', posts, is_dynamic=True, lmask=comments_mask, rmask=posts_mask)
+    comment_replyof_comment = loader.load_edge(comments, 'replyOf', comments, is_dynamic=True, lmask=comments_mask, rmask=comments_mask)
 
     print("Edges loaded\t%s" % (perf_counter() - time_start), file=stderr)
 

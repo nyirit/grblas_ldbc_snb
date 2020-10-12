@@ -108,7 +108,7 @@ class Loader:
 
         return columns
 
-    def load_vertex_type(self, vertex_type_name: str, column_names=None, *, is_dynamic, id_mask=None):
+    def load_vertex(self, vertex_type_name: str, column_names=None, *, is_dynamic, id_mask=None):
         """
 
         :param vertex_type_name:
@@ -161,8 +161,8 @@ class Loader:
         """
         return VertexType(vertex_type_name)
 
-    def load_edge_type(self, from_vertex_type: VertexType, edge_name: str, to_vertex_type: VertexType,
-                       *, is_dynamic: bool, dtype=dtypes.INT32, lmask=None, rmask=None, undirected=False):
+    def load_edge(self, from_vertex_type: VertexType, edge_name: str, to_vertex_type: VertexType,
+                  *, is_dynamic: bool, dtype=dtypes.INT32, lmask=None, rmask=None, undirected=False):
         """
 
         TODO: add parsing of properties of a relation.

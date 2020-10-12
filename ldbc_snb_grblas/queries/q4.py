@@ -20,7 +20,7 @@ def calc(data_dir, country_name):
 
     # load vertices
     loader = Loader(data_dir)
-    places = loader.load_vertex_type('place', column_names=['name', 'type'], is_dynamic=False)
+    places = loader.load_vertex('place', column_names=['name', 'type'], is_dynamic=False)
     persons = loader.load_empty_vertex('person')
     forums = loader.load_empty_vertex('forum')
     posts = loader.load_empty_vertex('post')
@@ -28,15 +28,15 @@ def calc(data_dir, country_name):
     print("Vertices loaded\t%s" % (perf_counter() - time_start), file=stderr)
 
     # get id of given country
-    country_id = places.data.index([country_name, 'country'])
+    country_index = places.data.index([country_name, 'country'])
 
     # load edges
-    place_ispartof_place = loader.load_edge_type(places, 'isPartOf', places, is_dynamic=False, rmask=(country_id,))
-    cities_mask, _ = place_ispartof_place[:, country_id].new().to_values()
+    place_ispartof_place = loader.load_edge(places, 'isPartOf', places, is_dynamic=False, rmask=(country_index,))
+    cities_mask, _ = place_ispartof_place[:, country_index].new().to_values()
 
-    person_islocatedin_place = loader.load_edge_type(persons, 'isLocatedIn', places, is_dynamic=True, rmask=cities_mask)
+    person_islocatedin_place = loader.load_edge(persons, 'isLocatedIn', places, is_dynamic=True, rmask=cities_mask)
     members_mask, _ = person_islocatedin_place.reduce_rows().new().to_values()
-    forum_hasmember_person = loader.load_edge_type(forums, 'hasMember', persons, is_dynamic=True, rmask=members_mask)
+    forum_hasmember_person = loader.load_edge(forums, 'hasMember', persons, is_dynamic=True, rmask=members_mask)
 
     # fixme: strictly not only loading was done until now, but some mask creations as well
     print("Edges loaded\t%s" % (perf_counter() - time_start), file=stderr)
@@ -51,10 +51,10 @@ def calc(data_dir, country_name):
     print("Top forums calculated\t%s" % (perf_counter() - time_start), file=stderr)
 
     # calculate nr. of posts per person (not including people who don't have any posts)
-    forum_containerof_post = loader.load_edge_type(forums, 'containerOf', posts, is_dynamic=True, lmask=top_forums_mask)
+    forum_containerof_post = loader.load_edge(forums, 'containerOf', posts, is_dynamic=True, lmask=top_forums_mask)
     posts_mask, _ = forum_containerof_post.reduce_columns().new().to_values()
 
-    post_hascreator_person = loader.load_edge_type(posts, 'hasCreator', persons, is_dynamic=True, lmask=posts_mask)
+    post_hascreator_person = loader.load_edge(posts, 'hasCreator', persons, is_dynamic=True, lmask=posts_mask)
 
     # create person->post_count dictionary
     persons_index, posts_count = post_hascreator_person.reduce_columns().new().to_values()[:2]
@@ -68,8 +68,8 @@ def calc(data_dir, country_name):
         pass
 
     # load person attributes
-    persons_data = loader.load_vertex_type('person', column_names=['firstName', 'lastName', 'creationDate'],
-                                           is_dynamic=True)
+    persons_data = loader.load_vertex('person', column_names=['firstName', 'lastName', 'creationDate'],
+                                      is_dynamic=True)
     persons_dict = persons_data.get_index_data_dict()
 
     for person_index, posts_count in islice(sorted_results, 100):

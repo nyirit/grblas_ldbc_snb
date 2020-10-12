@@ -20,13 +20,13 @@ def calc(data_dir, country_name):
     loader = Loader(data_dir)
 
     persons = loader.load_empty_vertex('person')
-    places = loader.load_vertex_type('place', is_dynamic=False, column_names=['name', 'type'])
+    places = loader.load_vertex('place', is_dynamic=False, column_names=['name', 'type'])
 
     print("Vertices persons and places\t%s" % (perf_counter() - time_start), file=stderr)
 
     # load edges
-    person_locatedin_place = loader.load_edge_type(persons, 'isLocatedIn', places, is_dynamic=True)
-    place_ispartof_place = loader.load_edge_type(places, 'isPartOf', places, is_dynamic=False)
+    person_locatedin_place = loader.load_edge(persons, 'isLocatedIn', places, is_dynamic=True)
+    place_ispartof_place = loader.load_edge(places, 'isPartOf', places, is_dynamic=False)
     print("Loaded locatedIn and isPartOf edges\t%s" % (perf_counter() - time_start), file=stderr)
 
     # get country index
@@ -42,7 +42,7 @@ def calc(data_dir, country_name):
     print("Created person mask\t%s" % (perf_counter() - time_start), file=stderr)
 
     # load person-knows-person for people located in 'country'
-    person_knows_person = loader.load_edge_type(persons, 'knows', persons, is_dynamic=True, lmask=person_mask, rmask=person_mask, undirected=True)
+    person_knows_person = loader.load_edge(persons, 'knows', persons, is_dynamic=True, lmask=person_mask, rmask=person_mask, undirected=True)
 
     # calculate triangles
     r = person_knows_person.mxm(person_knows_person).new()
@@ -52,4 +52,3 @@ def calc(data_dir, country_name):
     print("Triangles calculated. All done\t%s" % (perf_counter() - time_start), file=stderr)
 
     print(triangle_count)
-

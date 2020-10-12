@@ -33,8 +33,8 @@ def calc(data_dir, city1_id, city2_id):
     print("Vertices loaded\t%s" % (perf_counter() - time_start), file=stderr)
 
     # load edges
-    person_locatedin_city = loader.load_edge_type(persons, 'isLocatedIn', places, is_dynamic=True,
-                                                  rmask={city1_index, city2_index})
+    person_locatedin_city = loader.load_edge(persons, 'isLocatedIn', places, is_dynamic=True,
+                                             rmask={city1_index, city2_index})
 
     persons_in_city1, _ = person_locatedin_city[:, city1_index].new().to_values()
     persons_in_city2, _ = person_locatedin_city[:, city2_index].new().to_values()
@@ -42,16 +42,16 @@ def calc(data_dir, city1_id, city2_id):
     # create a matrix containing message-hascreator-person relation, which contains both posts and comments
     # fixme: does it worth at all to create these message-hascreator and replyof-message matrices...?
     # fixme: This could be solved by multiplying them separately.
-    comment_hascreator_person = loader.load_edge_type(comments, 'hasCreator', persons, is_dynamic=True)
-    post_hascreator_person = loader.load_edge_type(posts, 'hasCreator', persons, is_dynamic=True)
+    comment_hascreator_person = loader.load_edge(comments, 'hasCreator', persons, is_dynamic=True)
+    post_hascreator_person = loader.load_edge(posts, 'hasCreator', persons, is_dynamic=True)
 
     message_hascreator_person = comment_hascreator_person.dup()
     message_hascreator_person.resize(comments.length + posts.length, persons.length)
     message_hascreator_person[comments.length:comments.length + posts.length, :] = post_hascreator_person
 
     # create a matrix containing comment-replyOf-message relation, which contains both posts and comments as parents
-    comment_replyof_comment = loader.load_edge_type(comments, 'replyOf', comments, is_dynamic=True)
-    comment_replyof_post = loader.load_edge_type(comments, 'replyOf', posts, is_dynamic=True)
+    comment_replyof_comment = loader.load_edge(comments, 'replyOf', comments, is_dynamic=True)
+    comment_replyof_post = loader.load_edge(comments, 'replyOf', posts, is_dynamic=True)
     comment_replyof_messge = comment_replyof_comment.dup()
     comment_replyof_messge.resize(comments.length, comments.length + posts.length)
     comment_replyof_messge[:, comments.length:comments.length + posts.length] = comment_replyof_post

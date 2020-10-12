@@ -22,10 +22,10 @@ def calc(data_dir, person_id, tag_name):
     # load vertices
     loader = Loader(data_dir)
 
-    persons = loader.load_vertex_type('person', is_dynamic=True)
+    persons = loader.load_vertex('person', is_dynamic=True)
     person_vector = Vector.from_values([persons.id2index(person_id)], [True], size=persons.length)
 
-    tags = loader.load_vertex_type('tag', is_dynamic=False, column_names=['name'])
+    tags = loader.load_vertex('tag', is_dynamic=False, column_names=['name'])
 
     tag_index = tags.data.index([tag_name])
     tag_vector = Vector.from_values([tag_index], [True], size=tags.length)
@@ -33,9 +33,9 @@ def calc(data_dir, person_id, tag_name):
     print("Vertices loaded\t%s" % (perf_counter() - time_start), file=stderr)
 
     # load edges
-    person_knows_person = loader.load_edge_type(persons, 'knows', persons, is_dynamic=True, undirected=True)
+    person_knows_person = loader.load_edge(persons, 'knows', persons, is_dynamic=True, undirected=True)
 
-    person_hasinterest_tag = loader.load_edge_type(persons, 'hasInterest', tags, is_dynamic=True)
+    person_hasinterest_tag = loader.load_edge(persons, 'hasInterest', tags, is_dynamic=True)
 
     print("Edges loaded\t%s" % (perf_counter() - time_start), file=stderr)
 
