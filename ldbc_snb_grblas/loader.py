@@ -29,13 +29,16 @@ class VertexType:
         # so it doesn't make any sense to translate it to an id.
         return self._index2id[index]
 
-    def id2index(self, oid):
+    def id2index(self, oid, auto_create=True):
         # if an id wasn't loaded, let's create the mapping on-the-fly
         # this is useful when edges are used without needing any property for the corresponding vertices
         if oid not in self._id2index:
-            self._id2index[oid] = self.length
-            self._index2id.append(oid)
-            self.length += 1
+            if auto_create:
+                self._id2index[oid] = self.length
+                self._index2id.append(oid)
+                self.length += 1
+            else:
+                return None
 
         return self._id2index[oid]
 
@@ -164,6 +167,14 @@ class Loader:
     def load_edge(self, from_vertex_type: VertexType, edge_name: str, to_vertex_type: VertexType,
                   *, is_dynamic: bool, dtype=dtypes.INT32, lmask=None, rmask=None, undirected=False):
         """
+        Loads edges between of type 'edge_name' between 'from_vertex_type' and 'to_vertex_type'. These parameters
+        also define the csv file that will be loaded.
+
+        When using rmask or rmask not all entries will be loaded only the ones that have an index (and not id!)
+        already present in the mask tuple. This method assumes that the corresponding id should already be present
+        in the mapping. This results in matrix dimensions that correspond to the number of matching elements,
+        instead of the number of all elements. i.e. if only 1 entry matches the lmask out of a 1000, the matrix will
+        only have 1 row instead of 1000.
 
         TODO: add parsing of properties of a relation.
         :param edge_name:
@@ -205,24 +216,37 @@ class Loader:
                 id_from = int(row_data.pop(0))
                 id_to = int(row_data.pop(0))
 
-                from_index = from_vertex_type.id2index(id_from)
-                if lmask is not None and from_index not in lmask:
-                    continue
+                from_index = None
+                if lmask is not None:
+                    # if a mask is present auto creation of mapping doesn't make sense, because the mask already
+                    # assumes an index-id mapping
+                    from_index = from_vertex_type.id2index(id_from, auto_create=False)
+                    if from_index is None or from_index not in lmask:
+                        continue
 
-                to_index = to_vertex_type.id2index(id_to)
-                if rmask is not None and to_index not in rmask:
-                    continue
+                to_index = None
+                if rmask is not None:
+                    # if a mask is present auto creation of mapping doesn't make sense, because the mask already
+                    # assumes an index-id mapping
+                    to_index = to_vertex_type.id2index(id_to, auto_create=False)
+                    if to_index is None or to_index not in rmask:
+                        continue
+
+                # because of the auto_create=False, at this point to_index and/or from_index may be None.
+                # let's make sure they are valid.
+                to_index = to_index or to_vertex_type.id2index(id_to, auto_create=True)
+                from_index = from_index or from_vertex_type.id2index(id_from, auto_create=True)
 
                 from_indexes.append(from_index)
                 to_indexes.append(to_index)
 
                 # if there's anything else to store
                 if row_data:
-                    # todo: save additional properties
+                    # todo: save additional properties connected to the edge.
                     pass
 
         m = Matrix.from_values(from_indexes, to_indexes,
-                               repeat(1, len(from_indexes)),  # True for all value
+                               repeat(1, len(from_indexes)),  # 1 for all value
                                nrows=from_vertex_type.length,
                                ncols=to_vertex_type.length,
                                dtype=dtype,
