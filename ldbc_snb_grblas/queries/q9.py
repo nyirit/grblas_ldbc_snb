@@ -8,20 +8,8 @@ from time import perf_counter
 
 from itertools import islice
 
-from dateutil.parser import isoparse
-
 from ldbc_snb_grblas.loader import Loader
-from ldbc_snb_grblas.util import parse_user_date
-
-
-def _get_date_mask(vertex_type, start_date, end_date):
-    mask_indexes = set()
-    for i, [creation_date_str] in enumerate(vertex_type.data):
-        creation_date = isoparse(creation_date_str)
-        if start_date <= creation_date <= end_date:
-            mask_indexes.add(i)
-
-    return mask_indexes
+from ldbc_snb_grblas.util import parse_user_date, get_date_mask
 
 
 def calc(data_dir, start_date, end_date):
@@ -43,8 +31,8 @@ def calc(data_dir, start_date, end_date):
     print("Vertices loaded\t%s" % (perf_counter() - time_start), file=stderr)
 
     # get masks
-    comments_mask = _get_date_mask(comments, start_date, end_date)
-    posts_mask = _get_date_mask(posts, start_date, end_date)
+    comments_mask = get_date_mask(comments, 0, start_date, end_date)
+    posts_mask = get_date_mask(posts, 0, start_date, end_date)
 
     print("Edge masks calculated\t%s" % (perf_counter() - time_start), file=stderr)
 
