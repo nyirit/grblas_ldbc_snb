@@ -25,7 +25,7 @@ def execute():
         query = importlib.import_module('.queries.q%d' % args.queryid, 'ldbc_snb_grblas')
     except ModuleNotFoundError:
         # todo
-        print("give query id (%d) not found." % args.queryid)
+        print("given query id (%d) not found." % args.queryid)
         return
 
     query.calc(args.datadir, *args.params)
