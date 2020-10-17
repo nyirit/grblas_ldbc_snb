@@ -5,16 +5,13 @@ https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-03.pdf
 
 from itertools import islice
 
-from sys import stderr
-
-from time import perf_counter
-
 from ldbc_snb_grblas.loader import Loader
+from ldbc_snb_grblas.logger import Logger
 
 
 def calc(data_dir, tag_class_name, country_name):
     # init timer
-    time_start = perf_counter()
+    logger = Logger()
 
     # load data sets
     loader = Loader(data_dir)
@@ -27,7 +24,7 @@ def calc(data_dir, tag_class_name, country_name):
     persons = loader.load_empty_vertex('person')
     posts = loader.load_empty_vertex('post')
 
-    print("Vertices loaded\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Vertices loaded\t%s" % logger.get_total_time(), file=stderr)
 
     # get id of given tag class
     tag_class_index = tag_class.data.index([tag_class_name])
@@ -68,14 +65,18 @@ def calc(data_dir, tag_class_name, country_name):
     forum_containerof_post = loader.load_edge(forums, 'containerOf', posts, is_dynamic=True,
                                               lmask=forums_mask, rmask=posts_mask)
 
+    logger.loading_finished()
+
     # reduce to gte post count
     posts_per_forum = forum_containerof_post.reduce_rows().new()
 
-    print("Results calculated\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Results calculated\t%s" % logger.get_total_time(), file=stderr)
 
     # sort results
     result = sorted(zip(*posts_per_forum.to_values()), key=lambda x: (-x[1], x[0]))
-    print("Data sorted\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Data sorted\t%s" % logger.get_total_time(), file=stderr)
+
+    logger.calculation_finished()
 
     # print results
     for forum_index, post_count in islice(result, 20):
@@ -85,4 +86,5 @@ def calc(data_dir, tag_class_name, country_name):
         person_id = persons.index2id(moderators[forum_index])
         print(f"{forum_id};{forum_title};{forum_date};{person_id};{post_count}")
 
-    print("All done\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("All done\t%s" % logger.get_total_time(), file=stderr)
+    logger.print_finished()

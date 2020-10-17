@@ -4,20 +4,20 @@ https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-18.pdf
 """
 
 from itertools import repeat, islice
-from sys import stderr
-from time import perf_counter
 
 from grblas.mask import StructuralMask
 from grblas.matrix import Matrix
 from grblas.vector import Vector
 
 from ldbc_snb_grblas.loader import Loader
+from ldbc_snb_grblas.logger import Logger
 
 
 def calc(data_dir, person_id, tag_name):
     person_id = int(person_id)
 
-    time_start = perf_counter()
+    # init timer
+    logger = Logger()
 
     # load vertices
     loader = Loader(data_dir)
@@ -30,14 +30,16 @@ def calc(data_dir, person_id, tag_name):
     tag_index = tags.data.index([tag_name])
     tag_vector = Vector.from_values([tag_index], [True], size=tags.length)
 
-    print("Vertices loaded\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Vertices loaded\t%s" % logger.get_total_time(), file=stderr)
 
     # load edges
     person_knows_person = loader.load_edge(persons, 'knows', persons, is_dynamic=True, undirected=True)
 
     person_hasinterest_tag = loader.load_edge(persons, 'hasInterest', tags, is_dynamic=True)
 
-    print("Edges loaded\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Edges loaded\t%s" % logger.get_total_time(), file=stderr)
+
+    logger.loading_finished()
 
     # direct friends of given person
     friendsl1 = person_vector.vxm(person_knows_person).new()
@@ -78,8 +80,11 @@ def calc(data_dir, person_id, tag_name):
     # create final (person_id, count) tuples and sort them by count ASC, id DESC
     result = sorted(map(lambda x: (persons.index2id(x[0]), x[1]), result_values), key=lambda x: (-x[1], x[0]))
 
+    logger.calculation_finished()
+
     # print top results
     for person_id, mutual_friend_count in islice(result, 20):
         print(person_id, mutual_friend_count)
 
-    print("All done\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("All done\t%s" % logger.get_total_time(), file=stderr)
+    logger.print_finished()

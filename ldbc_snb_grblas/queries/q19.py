@@ -3,21 +3,20 @@ LDBC SNB BI query 19. Interaction path between cities
 https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-19.pdf
 """
 
-from sys import stderr
-from time import perf_counter
-
 from grblas import dtypes, semiring, monoid
 from grblas.matrix import Matrix
 from grblas.ops import UnaryOp
 
 from ldbc_snb_grblas.loader import Loader
+from ldbc_snb_grblas.logger import Logger
 
 
 def calc(data_dir, city1_id, city2_id):
     city1_id = int(city1_id)
     city2_id = int(city2_id)
 
-    time_start = perf_counter()
+    # init timer
+    logger = Logger()
 
     # load vertices
     loader = Loader(data_dir)
@@ -30,7 +29,7 @@ def calc(data_dir, city1_id, city2_id):
     city1_index = places.id2index(city1_id)
     city2_index = places.id2index(city2_id)
 
-    print("Vertices loaded\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Vertices loaded\t%s" % logger.get_total_time(), file=stderr)
 
     # load edges
     person_locatedin_city = loader.load_edge(persons, 'isLocatedIn', places, is_dynamic=True,
@@ -56,7 +55,9 @@ def calc(data_dir, city1_id, city2_id):
     comment_replyof_messge.resize(comments.length, comments.length + posts.length)
     comment_replyof_messge[:, comments.length:comments.length + posts.length] = comment_replyof_post
 
-    print("Edges loaded\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Edges loaded\t%s" % logger.get_total_time(), file=stderr)
+
+    logger.loading_finished()
 
     # calculate weight matrix
     person_replyof_message = comment_hascreator_person.T.mxm(comment_replyof_messge).new()
@@ -68,7 +69,7 @@ def calc(data_dir, city1_id, city2_id):
     recipr = UnaryOp.register_anonymous(lambda x: 1/x)
     person_weight_person << person_weight_person.apply(recipr)
 
-    print("Weight matrix calculated\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Weight matrix calculated\t%s" % logger.get_total_time(), file=stderr)
 
     # calculate shortest path on person_weight_person using Floyd-Warshall alg.
 
@@ -90,7 +91,7 @@ def calc(data_dir, city1_id, city2_id):
         # save the minimum of the currently and previously calculated values for each vertex
         person_weight_person << person_weight_person.ewise_add(tmp, op=monoid.min)
 
-    print("Shortest paths calculated\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Shortest paths calculated\t%s" % logger.get_total_time(), file=stderr)
 
     # extract results and map them to a list of tuples
     results = person_weight_person[list(persons_in_city1), list(persons_in_city2)].new()
@@ -105,10 +106,13 @@ def calc(data_dir, city1_id, city2_id):
             result_tuples.append((person1_id, person2_id, weight))
 
     # sort and print results
-    print("Result extracted, sorting...\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Result extracted, sorting...\t%s" % logger.get_total_time(), file=stderr)
     result_tuples = sorted(result_tuples, key=lambda x: (-x[2], x[1]))
+
+    logger.calculation_finished()
 
     for pair in result_tuples:
         print(*pair)
 
-    print("All done!\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("All done!\t%s" % logger.get_total_time(), file=stderr)
+    logger.print_finished()

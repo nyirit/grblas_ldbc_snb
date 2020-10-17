@@ -3,14 +3,13 @@ LDBC SNB BI query 5. Most active posters of a given topic
 https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-05.pdf
 """
 from itertools import islice
-from sys import stderr
-from time import perf_counter
 
 from grblas.mask import StructuralMask
 from grblas.ops import UnaryOp
 
 from ldbc_snb_grblas.grutil import merge_matrix
 from ldbc_snb_grblas.loader import Loader
+from ldbc_snb_grblas.logger import Logger
 
 points_per_like = 10
 points_per_reply = 2
@@ -19,7 +18,7 @@ result_limit = 100
 
 def calc(data_dir, tag_name):
     # init timer
-    time_start = perf_counter()
+    logger = Logger()
 
     # load vertices
     loader = Loader(data_dir)
@@ -31,7 +30,7 @@ def calc(data_dir, tag_name):
     comments = loader.load_empty_vertex('comment')
     posts = loader.load_empty_vertex('post')
 
-    print("Vertices loaded\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Vertices loaded\t%s" % logger.get_total_time(), file=stderr)
 
     # load edges
 
@@ -50,7 +49,8 @@ def calc(data_dir, tag_name):
     person_likes_comment = loader.load_edge(persons, 'likes', comments, is_dynamic=True)
     person_likes_post = loader.load_edge(persons, 'likes', posts, is_dynamic=True)
 
-    print("Edges loaded\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Edges loaded\t%s" % logger.get_total_time(), file=stderr)
+    logger.loading_finished()
 
     # create message matrices
     comment_replyof_message = merge_matrix(comment_replyof_comment, comment_replyof_post, row_wise=False, create_new=False)
@@ -64,7 +64,7 @@ def calc(data_dir, tag_name):
     comment_hastag_tag = None
     comment_hascreator_person = None
 
-    print("Message matrices created\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Message matrices created\t%s" % logger.get_total_time(), file=stderr)
 
     # get index for given tag
     tag_index = tags.data.index([tag_name])
@@ -101,16 +101,19 @@ def calc(data_dir, tag_name):
     # calculate score per person
     person_points = person_replies.ewise_add(person_likes).new().ewise_add(person_messages).new().to_values()
 
-    print("Scores calculated\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Scores calculated\t%s" % logger.get_total_time(), file=stderr)
 
     # sort: score asc, person index desc
     sorted_result = sorted(zip(*person_points), key=lambda x: (-x[1], persons.index2id(x[0])))
 
-    print("Results sorted\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Results sorted\t%s" % logger.get_total_time(), file=stderr)
 
     person_replies_dict = dict(zip(*person_replies.to_values()))
     person_likes_dict = dict(zip(*person_likes.to_values()))
     person_messages_dict = dict(zip(*person_messages.to_values()))
+
+    logger.calculation_finished()
+
     for index, score in islice(sorted_result, result_limit):
         person_id = persons.index2id(index)
         reply_count = person_replies_dict.get(index, 0) // points_per_reply
@@ -118,4 +121,5 @@ def calc(data_dir, tag_name):
         message_count = person_messages_dict[index]
         print(f"{person_id};{reply_count};{like_count};{message_count};{score}")
 
-    print("All done\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("All done\t%s" % logger.get_total_time(), file=stderr)
+    logger.print_finished()

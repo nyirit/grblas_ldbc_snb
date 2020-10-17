@@ -7,16 +7,13 @@ todo: results with 0 points are not added as of yet.
 
 from itertools import islice
 
-from sys import stderr
-
-from time import perf_counter
-
 from ldbc_snb_grblas.loader import Loader
+from ldbc_snb_grblas.logger import Logger
 
 
 def calc(data_dir, country_name):
     # init timer
-    time_start = perf_counter()
+    logger = Logger()
 
     # load vertices
     loader = Loader(data_dir)
@@ -25,7 +22,7 @@ def calc(data_dir, country_name):
     forums = loader.load_empty_vertex('forum')
     posts = loader.load_empty_vertex('post')
 
-    print("Vertices loaded\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Vertices loaded\t%s" % logger.get_total_time(), file=stderr)
 
     # get id of given country
     country_index = places.data.index([country_name, 'country'])
@@ -39,7 +36,9 @@ def calc(data_dir, country_name):
     forum_hasmember_person = loader.load_edge(forums, 'hasMember', persons, is_dynamic=True, rmask=members_mask)
 
     # fixme: strictly not only loading was done until now, but some mask creations as well
-    print("Edges loaded\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Edges loaded\t%s" % logger.get_total_time(), file=stderr)
+
+    logger.loading_finished()
 
     # calculate members per forum
     members_count_per_forum = forum_hasmember_person.reduce_rows().new()
@@ -48,7 +47,7 @@ def calc(data_dir, country_name):
     sorted_forums = sorted(zip(*members_count_per_forum.to_values()), key=lambda x: (-x[1], forums.index2id(x[0])))
     top_forums_mask = {index for index, _ in islice(sorted_forums, 100)}
 
-    print("Top forums calculated\t%s" % (perf_counter() - time_start), file=stderr)
+    # print("Top forums calculated\t%s" % logger.get_total_time(), file=stderr)
 
     # calculate nr. of posts per person (not including people who don't have any posts)
     forum_containerof_post = loader.load_edge(forums, 'containerOf', posts, is_dynamic=True, lmask=top_forums_mask)
@@ -72,9 +71,13 @@ def calc(data_dir, country_name):
                                       is_dynamic=True)
     persons_dict = persons_data.get_index_data_dict()
 
+    logger.calculation_finished()
+
     for person_index, posts_count in islice(sorted_results, 100):
         person_id = persons.index2id(person_index)
         first_name, last_name, creation_date = persons_dict[person_index]
         print(f"{person_id};{first_name};{last_name};{creation_date};{posts_count}")
 
-    print("All done\t%s" % (perf_counter() - time_start), file=stderr)
+    logger.print_finished()
+
+    # print("All done\t%s" % logger.get_total_time(), file=stderr)
