@@ -9,7 +9,7 @@ class Logger:
 
     def _print(self, message):
         time = self.timer.get_delta()
-        print(f"{message};{time}", file=stderr)
+        print(f"{message};{time:.20f}", file=stderr)
 
     def loading_finished(self):
         self._print("LOADED")
