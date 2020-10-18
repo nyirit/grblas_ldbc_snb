@@ -1,3 +1,5 @@
+from sys import stderr
+
 from ldbc_snb_grblas.timer import Timer
 
 
@@ -7,7 +9,7 @@ class Logger:
 
     def _print(self, message):
         time = self.timer.get_delta()
-        print(f"{message};{time}")
+        print(f"{message};{time}", file=stderr)
 
     def loading_finished(self):
         self._print("LOADED")
