@@ -165,7 +165,8 @@ class Loader:
         return VertexType(vertex_type_name)
 
     def load_edge(self, from_vertex_type: VertexType, edge_name: str, to_vertex_type: VertexType,
-                  *, is_dynamic: bool, dtype=dtypes.INT32, lmask=None, rmask=None, undirected=False):
+                  *, is_dynamic: bool, dtype=dtypes.INT32, lmask=None, rmask=None, undirected=False,
+                  from_id_header_override=None, to_id_header_override=None):
         """
         Loads edges between of type 'edge_name' between 'from_vertex_type' and 'to_vertex_type'. These parameters
         also define the csv file that will be loaded.
@@ -201,8 +202,8 @@ class Loader:
             # todo: if attributes are needed, column_names should be a function parameter and
             # todo: these values should be inserted into that
             column_names = [
-                '%s.id' % from_vertex_type.name,
-                '%s.id' % to_vertex_type.name,
+                from_id_header_override or f'{from_vertex_type.name}.id',
+                to_id_header_override or f'{to_vertex_type.name}.id',
             ]
 
             header = next(reader)

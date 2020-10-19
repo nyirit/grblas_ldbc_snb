@@ -49,8 +49,8 @@ def calc(data_dir, city1_id, city2_id):
     message_hascreator_person[comments.length:comments.length + posts.length, :] = post_hascreator_person
 
     # create a matrix containing comment-replyOf-message relation, which contains both posts and comments as parents
-    comment_replyof_comment = loader.load_edge(comments, 'replyOf', comments, is_dynamic=True)
-    comment_replyof_post = loader.load_edge(comments, 'replyOf', posts, is_dynamic=True)
+    comment_replyof_comment = loader.load_edge(comments, 'replyOf', comments, is_dynamic=True, to_id_header_override='ParentComment.id')
+    comment_replyof_post = loader.load_edge(comments, 'replyOf', posts, is_dynamic=True, to_id_header_override='ParentPost.id')
     comment_replyof_messge = comment_replyof_comment.dup()
     comment_replyof_messge.resize(comments.length, comments.length + posts.length)
     comment_replyof_messge[:, comments.length:comments.length + posts.length] = comment_replyof_post

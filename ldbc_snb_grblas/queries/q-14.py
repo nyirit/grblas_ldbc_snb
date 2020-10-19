@@ -37,8 +37,8 @@ def calc(data_dir, start_date, end_date):
     # print("Vertices loaded\t%s" % logger.get_total_time(), file=stderr)
 
     post_hascreator_person = loader.load_edge(posts, 'hasCreator', persons, is_dynamic=True)
-    comment_replyof_post = loader.load_edge(comments, 'replyOf', posts, is_dynamic=True)
-    comment_replyof_comment = loader.load_edge(comments, 'replyOf', comments, is_dynamic=True)
+    comment_replyof_post = loader.load_edge(comments, 'replyOf', posts, is_dynamic=True, to_id_header_override='ParentPost.id')
+    comment_replyof_comment = loader.load_edge(comments, 'replyOf', comments, is_dynamic=True, to_id_header_override='ParentComment.id')
 
     # print("Edges loaded\t%s" % logger.get_total_time(), file=stderr)
     logger.loading_finished()

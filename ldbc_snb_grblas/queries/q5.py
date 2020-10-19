@@ -44,8 +44,8 @@ def calc(data_dir, tag_name):
 
     comment_hastag_tag = loader.load_edge(comments, 'hasTag', tags, is_dynamic=True)
     post_hastag_tag = loader.load_edge(posts, 'hasTag', tags, is_dynamic=True)
-    comment_replyof_post = loader.load_edge(comments, 'replyOf', posts, is_dynamic=True)
-    comment_replyof_comment = loader.load_edge(comments, 'replyOf', comments, is_dynamic=True)
+    comment_replyof_post = loader.load_edge(comments, 'replyOf', posts, is_dynamic=True, to_id_header_override='ParentPost.id')
+    comment_replyof_comment = loader.load_edge(comments, 'replyOf', comments, is_dynamic=True, to_id_header_override='ParentComment.id')
     person_likes_comment = loader.load_edge(persons, 'likes', comments, is_dynamic=True)
     person_likes_post = loader.load_edge(persons, 'likes', posts, is_dynamic=True)
 
