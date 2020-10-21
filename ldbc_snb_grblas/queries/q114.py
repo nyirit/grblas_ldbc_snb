@@ -3,7 +3,7 @@ Legacy LDBC SNB BI query 14. Top thread initiator
 https://arxiv.org/pdf/2001.02299.pdf#page=69
 
 Note: in the newer version of LDBC SNB BI this query is omitted.
-      That is why the filename is -14 instead of 14.
+      That is why the filename is 114 instead of 14.
 """
 
 from itertools import islice
