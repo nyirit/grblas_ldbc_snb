@@ -2,6 +2,7 @@
 LDBC SNB BI query 7. Related topics
 https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-07.pdf
 """
+from grblas import semiring
 from itertools import islice
 
 from grblas.mask import StructuralMask
@@ -44,8 +45,8 @@ def calc(data_dir, tag_name):
     comments_with_tag.resize(comments.length)
 
     # get comments that are replies of a post and comments that are replies of another comment
-    post_replies = comment_replyof_post.mxv(posts_with_tag).new()
-    comment_replies = comment_replyof_comment.mxv(comments_with_tag).new()
+    post_replies = comment_replyof_post.mxv(posts_with_tag, op=semiring.any_pair).new()
+    comment_replies = comment_replyof_comment.mxv(comments_with_tag, op=semiring.any_pair).new()
 
     # after getting post and comment replies, make sure their size match
     post_replies.resize(comments.length)
