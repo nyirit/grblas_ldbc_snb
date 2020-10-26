@@ -17,8 +17,5 @@ class Logger:
     def calculation_finished(self):
         self._print("CALCULATED")
 
-    def print_finished(self):
-        self._print("PRINTED")
-
     def get_total_time(self):
         self.timer.get_total_time()

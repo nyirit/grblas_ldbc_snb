@@ -78,6 +78,4 @@ def calc(data_dir, country_name):
         first_name, last_name, creation_date = persons_dict[person_index]
         print(f"{person_id};{first_name};{last_name};{creation_date};{posts_count}")
 
-    logger.print_finished()
-
     # print("All done\t%s" % logger.get_total_time(), file=stderr)

@@ -115,4 +115,3 @@ def calc(data_dir, city1_id, city2_id):
         print(*pair)
 
     # print("All done!\t%s" % logger.get_total_time(), file=stderr)
-    logger.print_finished()

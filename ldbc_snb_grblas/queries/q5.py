@@ -122,4 +122,3 @@ def calc(data_dir, tag_name):
         print(f"{person_id};{reply_count};{like_count};{message_count};{score}")
 
     # print("All done\t%s" % logger.get_total_time(), file=stderr)
-    logger.print_finished()

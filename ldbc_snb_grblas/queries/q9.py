@@ -79,4 +79,3 @@ def calc(data_dir, start_date, end_date):
         print(person_id, first_name, last_name, thread_count[person_index].value, message_count)
 
     # print("All done\t%s" % logger.get_total_time(), file=stderr)
-    logger.print_finished()

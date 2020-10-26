@@ -96,4 +96,3 @@ def calc(data_dir, start_date, end_date):
         print(f"{pid};{first_name};{last_name};{threads};{message_count}")
 
     # print("All done\t%s" % logger.get_total_time(), file=stderr)
-    logger.print_finished()

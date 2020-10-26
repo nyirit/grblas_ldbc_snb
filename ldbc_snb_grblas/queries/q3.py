@@ -87,4 +87,3 @@ def calc(data_dir, tag_class_name, country_name):
         print(f"{forum_id};{forum_title};{forum_date};{person_id};{post_count}")
 
     # print("All done\t%s" % logger.get_total_time(), file=stderr)
-    logger.print_finished()

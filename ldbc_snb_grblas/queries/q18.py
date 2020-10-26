@@ -87,4 +87,3 @@ def calc(data_dir, person_id, tag_name):
         print(person_id, mutual_friend_count)
 
     # print("All done\t%s" % logger.get_total_time(), file=stderr)
-    logger.print_finished()

@@ -55,5 +55,3 @@ def calc(data_dir, country_name):
     # print("Triangles calculated. All done\t%s" % logger.get_total_time(), file=stderr)
 
     print(triangle_count)
-
-    logger.print_finished()
