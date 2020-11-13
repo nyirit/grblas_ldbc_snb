@@ -79,19 +79,11 @@ def calc(data_dir, city1_id, city2_id):
     for i in range(person_weight_person.ncols):
         person_weight_person[i, i] << 0
 
-    # create a 1-column-matrix and b 1-row-matrix
-    a = Matrix.new(dtype=person_weight_person.dtype, nrows=person_weight_person.nrows, ncols=1)
-    b = Matrix.new(dtype=person_weight_person.dtype, nrows=1, ncols=person_weight_person.ncols)
-    for k in range(person_weight_person.ncols):
-        # extract given row and column
-        a[:, 0] << person_weight_person[:, k].new()
-        b[0, :] << person_weight_person[k, :].new()
-
-        # calculate path using the new vertex
-        tmp = a.mxm(b, op=semiring.min_plus).new()
-
-        # save the minimum of the currently and previously calculated values for each vertex
-        person_weight_person << person_weight_person.ewise_add(tmp, op=monoid.min)
+    d = Vector.new(dtype=person_weight_person.dtype, size=persons.length)
+    d[persons.id2index(28587302323099, auto_create=False)] << 0
+    for i in range(1, 11000):
+        d << d.vxm(person_weight_person, op=semiring.min_plus).new()
+    print(d[persons.id2index(30786325578881, auto_create=False)].value)
 
     # print("Shortest paths calculated\t%s" % logger.get_total_time(), file=stderr)
 
