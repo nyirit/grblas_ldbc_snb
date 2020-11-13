@@ -4,11 +4,7 @@
 
 1. Install Anaconda.
 
-2. Install the packages:
-
-```bash
-conda install --file requirements.txt
-```
+2. Install [`grblas`](https://github.com/metagraph-dev/grblas): `conda install -c conda-forge grblas`
 
 ## Usage
 
