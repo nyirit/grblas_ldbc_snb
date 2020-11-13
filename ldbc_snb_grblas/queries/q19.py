@@ -4,6 +4,7 @@ https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-19.pdf
 """
 
 from grblas import dtypes, semiring, monoid
+from grblas.mask import StructuralMask
 from grblas.matrix import Matrix
 from grblas.ops import UnaryOp
 
@@ -21,7 +22,8 @@ def calc(data_dir, city1_id, city2_id):
     # load vertices
     loader = Loader(data_dir)
 
-    persons = loader.load_empty_vertex('person')
+    persons = loader.load_vertex('person', is_dynamic=True)
+    #persons = loader.load_empty_vertex('person')
     places = loader.load_empty_vertex('place')
     comments = loader.load_empty_vertex('comment')
     posts = loader.load_empty_vertex('post')
@@ -32,6 +34,8 @@ def calc(data_dir, city1_id, city2_id):
     # print("Vertices loaded\t%s" % logger.get_total_time(), file=stderr)
 
     # load edges
+    person_knows_person = loader.load_edge(persons, 'knows', persons, is_dynamic=True, undirected=True,
+                                           from_id_header_override='Person1.id', to_id_header_override='Person2.id')
     person_locatedin_city = loader.load_edge(persons, 'isLocatedIn', places, is_dynamic=True,
                                              rmask={city1_index, city2_index})
 
@@ -55,13 +59,14 @@ def calc(data_dir, city1_id, city2_id):
     comment_replyof_messge.resize(comments.length, comments.length + posts.length)
     comment_replyof_messge[:, comments.length:comments.length + posts.length] = comment_replyof_post
 
-    # print("Edges loaded\t%s" % logger.get_total_time(), file=stderr)
-
     logger.loading_finished()
 
     # calculate weight matrix
-    person_replyof_message = comment_hascreator_person.T.mxm(comment_replyof_messge).new()
-    person_weight_person = person_replyof_message.mxm(message_hascreator_person).new(dtype=dtypes.FP32)
+    person_replyof_message = message_hascreator_person.T.mxm(comment_replyof_messge.T).new()
+    person_weight_person = person_replyof_message.mxm(comment_hascreator_person).new(dtype=dtypes.FP32, mask=StructuralMask(person_knows_person))
+
+    # make sure we have a square matrix. It can be different because not all person created replies or comments.
+    person_weight_person.resize(persons.length, persons.length)
 
     # make weight matrix bidirectional
     person_weight_person << person_weight_person.ewise_add(person_weight_person.T)
@@ -69,10 +74,7 @@ def calc(data_dir, city1_id, city2_id):
     recipr = UnaryOp.register_anonymous(lambda x: 1/x)
     person_weight_person << person_weight_person.apply(recipr)
 
-    # print("Weight matrix calculated\t%s" % logger.get_total_time(), file=stderr)
-
     # calculate shortest path on person_weight_person using Floyd-Warshall alg.
-
     # set diagonal to 0
     for i in range(person_weight_person.ncols):
         person_weight_person[i, i] << 0

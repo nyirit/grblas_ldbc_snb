@@ -90,7 +90,7 @@ class Loader:
         columns = []
 
         # make sure all header elements are lowercase
-        header = [x.lower() for x in header]
+        header = [x.split(':')[0].lower() for x in header]
 
         for name in column_names:
             # make sure column name is lowercase as well
@@ -104,7 +104,7 @@ class Loader:
                 # The possibility for finding it again exists, as e.g. comment<-replyOf-comment relation has
                 # Comment.id twice in the header.
                 header[index] = ''
-            except AttributeError:
+            except (AttributeError, ValueError):
                 logger.error("Column '%s' not found! Possible values are: %s" % (
                     name, ', '.join(header)))
                 raise LoadError()
