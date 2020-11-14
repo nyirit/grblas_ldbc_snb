@@ -2,8 +2,9 @@
 LDBC SNB BI query 19. Interaction path between cities
 https://ldbc.github.io/ldbc_snb_docs_snapshot/bi-read-19.pdf
 """
+from itertools import repeat
 
-from grblas import dtypes, semiring, monoid
+from grblas import dtypes, semiring
 from grblas.mask import StructuralMask
 from grblas.matrix import Matrix
 from grblas.ops import UnaryOp
@@ -22,8 +23,7 @@ def calc(data_dir, city1_id, city2_id):
     # load vertices
     loader = Loader(data_dir)
 
-    persons = loader.load_vertex('person', is_dynamic=True)
-    #persons = loader.load_empty_vertex('person')
+    persons = loader.load_empty_vertex('person')
     places = loader.load_empty_vertex('place')
     comments = loader.load_empty_vertex('comment')
     posts = loader.load_empty_vertex('post')
@@ -47,6 +47,11 @@ def calc(data_dir, city1_id, city2_id):
     # fixme: This could be solved by multiplying them separately.
     comment_hascreator_person = loader.load_edge(comments, 'hasCreator', persons, is_dynamic=True)
     post_hascreator_person = loader.load_edge(posts, 'hasCreator', persons, is_dynamic=True)
+
+    # make sure to have the same person dimension length
+    person_knows_person.resize(persons.length, persons.length)
+    comment_hascreator_person.resize(comment_hascreator_person.nrows, persons.length)
+    post_hascreator_person.resize(post_hascreator_person.nrows, persons.length)
 
     message_hascreator_person = comment_hascreator_person.dup()
     message_hascreator_person.resize(comments.length + posts.length, persons.length)
@@ -79,25 +84,28 @@ def calc(data_dir, city1_id, city2_id):
     for i in range(person_weight_person.ncols):
         person_weight_person[i, i] << 0
 
-    d = Vector.new(dtype=person_weight_person.dtype, size=persons.length)
-    d[persons.id2index(28587302323099, auto_create=False)] << 0
-    for i in range(1, 11000):
-        d << d.vxm(person_weight_person, op=semiring.min_plus).new()
-    print(d[persons.id2index(30786325578881, auto_create=False)].value)
+    # Batched Bellman-Ford algorith for finding shortest path
+    len_city1 = len(persons_in_city1)
+    path_matrix = Matrix.from_values(range(len_city1), persons_in_city1, repeat(0, len_city1),
+                                     ncols=persons.length, dtype=person_weight_person.dtype)
 
-    # print("Shortest paths calculated\t%s" % logger.get_total_time(), file=stderr)
+    prev_path_matrix = path_matrix.dup()
+    while True:
+        path_matrix << path_matrix.mxm(person_weight_person, op=semiring.min_plus)
 
-    # extract results and map them to a list of tuples
-    results = person_weight_person[list(persons_in_city1), list(persons_in_city2)].new()
+        if path_matrix.isequal(prev_path_matrix):
+            # break if a fix point is reached
+            break
 
-    result_tuples = []
-    for i in range(len(persons_in_city1)):
-        person1_id = persons.index2id(persons_in_city1[i])
+        prev_path_matrix = path_matrix.dup()
 
-        for j in range(len(persons_in_city2)):
-            person2_id = persons.index2id(persons_in_city2[j])
-            weight = results[i, j].value
-            result_tuples.append((person1_id, person2_id, weight))
+    # extract only people in city 2
+    results = path_matrix[:, list(persons_in_city2)].new()
+
+    result_tuples = [
+        (persons.index2id(persons_in_city1[p1]), persons.index2id(persons_in_city2[p2]), w)
+        for p1, p2, w in zip(*results.to_values())
+    ]
 
     # sort and print results
     # print("Result extracted, sorting...\t%s" % logger.get_total_time(), file=stderr)
