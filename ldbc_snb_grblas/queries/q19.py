@@ -109,7 +109,7 @@ def calc(data_dir, city1_id, city2_id):
 
     # sort and print results
     # print("Result extracted, sorting...\t%s" % logger.get_total_time(), file=stderr)
-    result_tuples = sorted(result_tuples, key=lambda x: (-x[2], x[1]))
+    result_tuples = sorted(result_tuples, key=lambda x: (-x[2], x[0], x[1]))
 
     logger.calculation_finished()
 
