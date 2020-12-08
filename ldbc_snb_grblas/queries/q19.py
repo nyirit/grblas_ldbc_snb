@@ -84,7 +84,7 @@ def calc(data_dir, city1_id, city2_id):
     for i in range(person_weight_person.ncols):
         person_weight_person[i, i] << 0
 
-    # Batched Bellman-Ford algorith for finding shortest path
+    # Batched Bellman-Ford algorithm for finding shortest path
     len_city1 = len(persons_in_city1)
     path_matrix = Matrix.from_values(range(len_city1), persons_in_city1, repeat(0, len_city1),
                                      ncols=persons.length, dtype=person_weight_person.dtype)
